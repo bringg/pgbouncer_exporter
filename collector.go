@@ -87,7 +87,7 @@ func (m *MetricMapNamespace) Query(ch chan<- prometheus.Metric, db *sql.DB) ([]e
 	}
 	if err := rows.Err(); err != nil {
 		log.Errorf("Failed scaning all rows due to scan failure: error was; %s", err)
-		nonfatalErrors = append(nonfatalErrors, errors.New(fmt.Sprintf("Failed to consume all rows due to: %s", err)))
+		nonfatalErrors = append(nonfatalErrors, fmt.Errorf("Failed to consume all rows due to: %s", err))
 	}
 	return nonfatalErrors, nil
 }
@@ -155,9 +155,8 @@ func metricKVConverter(m *MetricMapNamespace, result *rowResult, ch chan<- prome
 // to by the collector
 type MetricMap struct {
 	vtype      prometheus.ValueType // Prometheus valuetype
-	namespace  string
-	desc       *prometheus.Desc // Prometheus descriptor
-	multiplier float64          // This is a multiplier to apply pgbouncer values in converting to prometheus norms.
+	desc       *prometheus.Desc     // Prometheus descriptor
+	multiplier float64              // This is a multiplier to apply pgbouncer values in converting to prometheus norms.
 }
 
 type ColumnMapping struct {
@@ -168,9 +167,8 @@ type ColumnMapping struct {
 // Exporter collects PgBouncer stats from the given server and exports
 // them using the prometheus metrics package.
 type Exporter struct {
-	connectionString string
-	namespace        string
-	mutex            sync.RWMutex
+	namespace string
+	mutex     sync.RWMutex
 
 	duration, up, error prometheus.Gauge
 	totalScrapes        prometheus.Counter
@@ -342,27 +340,6 @@ func getDB(conn string) (*sql.DB, error) {
 	db.SetMaxIdleConns(1)
 
 	return db, nil
-}
-
-// Convert database.sql to string for Prometheus labels. Null types are mapped to empty strings.
-func dbToString(t interface{}) (string, bool) {
-	switch v := t.(type) {
-	case int64:
-		return fmt.Sprintf("%v", v), true
-	case float64:
-		return fmt.Sprintf("%v", v), true
-	case time.Time:
-		return fmt.Sprintf("%v", v.Unix()), true
-	case nil:
-		return "", true
-	case []byte:
-		// Try and convert to string
-		return string(v), true
-	case string:
-		return v, true
-	default:
-		return "", false
-	}
 }
 
 // Convert database.sql types to float64s for Prometheus consumption. Null types are mapped to NaN. string and []byte
