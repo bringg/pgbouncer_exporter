@@ -424,13 +424,16 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) {
 	e.error.Set(0)
 	e.totalScrapes.Inc()
 
-	if err := e.db.Ping(); err != nil {
-		log.Errorf("Backend is down, failed to connect: %s", err)
+	rows, err := e.db.Query("SHOW VERSION")
+	if err != nil {
+		log.Errorf("Pgbouncer is down: %s", err)
 		e.error.Set(1)
 		e.up.Set(0)
 		return
 	}
-	log.Debug("Backend is up, proceeding with scrape")
+
+	rows.Close()
+	log.Debug("Pgbouncer is up, proceeding with scrape")
 	e.up.Set(1)
 
 	for _, mapping := range e.metricMap {
