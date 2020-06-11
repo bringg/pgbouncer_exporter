@@ -87,7 +87,7 @@ func (m *MetricMapNamespace) Query(ch chan<- prometheus.Metric, db *sql.DB) ([]e
 	}
 	if err := rows.Err(); err != nil {
 		log.Errorf("Failed scaning all rows due to scan failure: error was; %s", err)
-		nonfatalErrors = append(nonfatalErrors, fmt.Errorf("Failed to consume all rows due to: %s", err))
+		nonfatalErrors = append(nonfatalErrors, fmt.Errorf("failed to consume all rows due to: %s", err))
 	}
 	return nonfatalErrors, nil
 }
@@ -289,7 +289,6 @@ var metricRowMaps = map[string]map[string]ColumnMapping{
 }
 
 func NewExporter(connectionString string, namespace string) *Exporter {
-
 	db, err := getDB(connectionString)
 
 	if err != nil {

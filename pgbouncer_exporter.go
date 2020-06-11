@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,21 +10,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const (
-	namespace = "pgbouncer"
-	indexHTML = `
-	<html>
-		<head>
-			<title>PgBouncer Exporter</title>
-		</head>
-		<body>
-			<h1>PgBouncer Exporter</h1>
-			<p>
-			<a href='%s'>Metrics</a>
-			</p>
-		</body>
-	</html>`
-)
+const namespace = "pgbouncer"
 
 func main() {
 	var (
@@ -47,7 +32,13 @@ func main() {
 
 	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf(indexHTML, *metricsPath)))
+		w.Write([]byte(`<html>
+			<head><title>PgBouncer Exporter</title></head>
+			<body>
+			<h1>PgBouncer Exporter</h1>
+			<p><a href="` + *metricsPath + `">Metrics</a></p>
+			</body>
+			</html>`))
 	})
 
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
